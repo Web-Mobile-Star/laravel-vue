@@ -1,0 +1,150 @@
+# Docker Compose file for the DEVELOPMENT environment
+# Not for production!
+
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+x-laravel-dev: &laravel-dev
+  # user is needed for fix-perms
+  user: "0:0"
+  environment:
+    - APP_DEBUG=true
+    - APP_ENV=local
+    - APP_HOST=app
+    - APP_NAME=AutoFeedback
+    - APP_PORT=9000
+    - APP_TIMEZONE=UTC
+    - BROADCAST_DRIVER=redis
+    - DB_DATABASE=my_database
+    - DB_HOST=mariadb
+    - DB_PASSWORD=my_password
+    - DB_USERNAME=my_user
+    - KEEP_LATEST_ATTEMPTS=10
+    - LDAP_BASE_DN=dc=example,dc=com
+    - LDAP_HOST=openldap
+    - LDAP_PASSWORD=admin
+    - LDAP_PORT=389
+    - LDAP_SSL=false
+    - LDAP_TIMEOUT=5
+    - LDAP_TLS=false
+    - LDAP_USERNAME=cn=admin,dc=example,dc=com
+    - QUEUE_CONNECTION=redis
+    - REDIS_HOST=redis
+    - REDIS_PASSWORD=redispass
+    - REDIS_QUEUE_RETRY=600
+    - REDIS_QUEUE_BLOCK_SECS=1
+  volumes:
+    - ./webapp:/app
+
+services:
+  mariadb:
+   environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=iamroot
+      - MARIADB_USER=my_user
+      - MARIADB_DATABASE=my_database
+      - MARIADB_PASSWORD=my_password
+
+  # Test-only DB, so our dev DB is not nuked during automated tests
+  mariadb-test:
+    image: 'docker.io/bitnami/mariadb:10.5-debian-10'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_DATABASE=app_test
+    tmpfs:
+      - /bitnami/mariadb
+      - /tmp
+
+  redis:
+    environment:
+      - REDIS_PASSWORD=redispass
+
+  nginx:
+    # In development, we just use bind mounts for code + config
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+      target: development
+    image: autofeedback/nginx:development
+    environment:
+      - SERVER_NAME=localhost
+      - SERVER_PORT=3000
+      - HTTP_HOST=localhost:3000
+      - REQUEST_SCHEME=http
+    ports:
+      - 3000:8080
+    volumes:
+      - ./webapp:/app
+      - ./docker/nginx/templates:/opt/bitnami/nginx/conf/server_block_templates:ro
+
+  app:
+    <<: *laravel-dev
+    # Laravel dev container with fix-perms and caching disabled
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      target: development
+    image: autofeedback/app:development
+    # Allows container to have consistent name to talk to the host (for XDebug)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # NOTE: worker should use its own limited DB user (with no DDL rights)
+  java-worker:
+    <<: *laravel-dev
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+      target: development
+    image: autofeedback/worker:development
+    volumes:
+      - ./webapp:/app
+      # If you change java.policy, in order for the workers to notice the
+      # change you will need to stop + start them with:
+      #
+      # ./dev-compose.sh stop java-worker && ./dev-compose.sh up -d java-worker
+      - ./docker/worker/java.policy:/etc/surefire.policy:ro
+      - m2_data:/home/www-data/.m2
+
+  default-worker:
+    <<: *laravel-dev
+    build:
+      context: .
+      dockerfile: docker/worker/Dockerfile
+      target: development
+    image: autofeedback/worker:development
+
+  # Installs and runs Laravel Mix in the background
+  mix:
+    build: docker/node
+    image: autofeedback/node:development
+    user: "0:0"
+    volumes:
+      - ./webapp:/app
+
+  # Worker variant which runs tests and uses the test-only MariaDB
+  test-runner:
+    extends:
+      service: default-worker
+      file: docker-compose.dev.yml
+    environment:
+      DB_DATABASE: app_test
+      DB_HOST: mariadb-test
+      DB_PASSWORD:
+      DB_USERNAME: root
+      LDAP_TYPE: openldap
+      WAIT_FOR_LDAP: "true"
+    depends_on:
+      - mariadb-test
+      - app
+    # intentional: we do not want any instances on a normal 'up'
+    scale: 0
+
+  echo:
+    build: docker/echo
+    image: autofeedback/echo:development
+    environment:
+      - APP_ID=b7dab32762076626
+      - APP_KEY=e1a65cc96e722f1aac4f6b68c25a00e5
+      - DEV_MODE=true
+      - REDIS_PASSWORD=redispass

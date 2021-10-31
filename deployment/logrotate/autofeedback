@@ -1,0 +1,8 @@
+/var/backups/autofeedback-app_data.tar.gz /var/backups/autofeedback-app_public_data.tar.gz /var/backups/autofeedback-mariadb.sql.gz {
+  daily
+  missingok
+  create 440 root root
+  rotate 14
+  nocompress
+  nocreate
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+umask 377
+
+docker exec autofeedback_mariadb_1 sh \
+  -c 'exec mysqldump --all-databases -uroot -p"$MARIADB_ROOT_PASSWORD"' \
+  | gzip -9c > /var/backups/autofeedback-mariadb.sql.gz

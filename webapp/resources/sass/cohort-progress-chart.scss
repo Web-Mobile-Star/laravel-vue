@@ -1,0 +1,108 @@
+/**
+ *  Copyright 2020 Aston University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import '~bootstrap/scss/bootstrap';
+
+.cohort-progress-chart {
+    svg {
+        height: 90%;
+        width: 100%;
+    }
+
+    rect {
+        stroke: black;
+        fill: slateblue;
+        fill-opacity: 0.4;
+    }
+
+    .test-label {
+        font-family: "Helvetica Neue", Helvetica, sans-serif;
+        font-size: 12px;
+    }
+
+    .modal-dialog,
+    .modal-content {
+        /* 80% of window height */
+        height: 90%;
+    }
+
+    .modal-body {
+        /* 100% = dialog height, 120px = header + footer */
+        max-height: calc(100% - 120px);
+        overflow-y: scroll;
+    }
+
+    .type-label {
+        text-anchor: middle;
+        font-size: 20px;
+        user-select: none;
+    }
+
+    .result-passed {
+        rect {
+            fill: $success;
+            fill-opacity: 1;
+        }
+
+        .type-label {
+            fill: lighten($success, 20%);
+        }
+    }
+
+    .result-failed {
+        rect {
+            fill: $danger;
+            fill-opacity: 1;
+        }
+
+        .type-label {
+            fill: lighten($danger, 20%);
+        }
+    }
+
+    .result-errored {
+        rect {
+            fill: $warning;
+            fill-opacity: 1;
+        }
+
+        .type-label {
+            fill: darken($warning, 30%);
+        }
+    }
+
+    .result-skipped {
+        rect {
+            fill: $light;
+            fill-opacity: 1;
+        }
+
+        .type-label {
+            fill: darken($light, 30%);
+        }
+    }
+
+    .result-missing {
+        rect {
+            fill: $dark;
+            fill-opacity: 1;
+        }
+
+        .type-label {
+            fill: lighten($dark, 20%);
+        }
+    }
+}

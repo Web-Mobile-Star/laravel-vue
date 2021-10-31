@@ -1,0 +1,17 @@
+dn: uid=ldapuser,dc=example,dc=com
+changetype: add
+objectClass: inetorgperson
+cn: Someone Studious
+mail: ldapuser@example.com
+sn: Studious
+# iamldap
+userPassword: {SSHA}nex6vLyU3YwwPcgr1nVPH36a4qgMF7T8
+
+dn: uid=ldapuser2,dc=example,dc=com
+changetype: add
+objectClass: inetorgperson
+cn: Someone Else
+mail: ldapuser2@example.com
+sn: Else
+# iamldap
+userPassword: {SSHA}nex6vLyU3YwwPcgr1nVPH36a4qgMF7T8

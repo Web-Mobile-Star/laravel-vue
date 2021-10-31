@@ -1,0 +1,106 @@
+# Docker Compose file with environment variables for integration test,
+# using production-level Docker images without bind mounts.
+#
+# This can also be used as a basic template for a production deployment: tweak
+# usernames/passwords, and port numbers. You could also tweak the image names,
+# to freeze the deployment at a particular tag. You should apply the base
+# docker-compose.yml file, then the volumes file, and then your own local copy
+# of this file with appropriate tweaks.
+#
+# In a production environment, it may be a good idea to manually create a user
+# with no DDL rights (no ability to run migrations) and give those credentials
+# to the workers.
+#
+# Additionally, if your production environment already has an OpenLDAP server,
+# you can remove the mention of openldap from here.
+
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+x-redis-pass: &redis-pass REDIS_PASSWORD=redispass
+
+x-laravel-test: &laravel-test
+  environment:
+    - APP_DEBUG=false
+    - APP_ENV=production
+    - APP_NAME=AutoFeedback
+    - APP_HOST=app
+    - APP_PORT=9000
+    # FOR PRODUCTION, generate with: php artisan key:generate --show
+    # - APP_KEY=value
+    # FOR PRODUCTION, set APP_TIMEZONE to value from
+    #   https://www.php.net/manual/en/timezones.php
+    - APP_TIMEZONE=UTC
+    - APP_URL=http://localhost:3000/
+    - APP_LOG_LEVEL=info
+    - BROADCAST_DRIVER=redis
+    - DB_HOST=mariadb
+    - DB_USERNAME=my_user
+    - DB_DATABASE=my_database
+    - DB_PASSWORD=my_password
+    # FOR PRODUCTION, if >0 limits how many attempts are stored
+    - KEEP_LATEST_ATTEMPTS=10
+    - LDAP_BASE_DN=dc=example,dc=com
+    - LDAP_HOST=openldap
+    # FOR PRODUCTION, change to the appropriate one for your directory
+    - LDAP_NAME_ATTRIBUTE=cn
+    - LDAP_PASSWORD=admin
+    - LDAP_PORT=389
+    - LDAP_SSL=false
+    - LDAP_TIMEOUT=5
+    - LDAP_TLS=false
+    # FOR PRODUCTION, pick between openldap or active_directory
+    - LDAP_TYPE=openldap
+    - LDAP_USERNAME=cn=admin,dc=example,dc=com
+    - QUEUE_CONNECTION=redis
+    - REDIS_HOST=redis
+    - REDIS_QUEUE_RETRY=600
+    # FOR PRODUCTION, you may want to reduce this blocking period
+    - REDIS_QUEUE_BLOCK_SECS=5
+    # If using SSL, uncomment this line
+    #- SESSION_SECURE_COOKIE=true
+    - *redis-pass
+
+
+services:
+  mariadb:
+   environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=iamroot
+      - MARIADB_USER=my_user
+      - MARIADB_DATABASE=my_database
+      - MARIADB_PASSWORD=my_password
+
+  redis:
+    environment:
+      - *redis-pass
+
+  nginx:
+    environment:
+      - SERVER_NAME=localhost
+      - SERVER_PORT=3000
+      - HTTP_HOST=localhost:3000
+      - REQUEST_SCHEME=http
+    ports:
+      - 3000:8080
+
+  app:
+    <<: *laravel-test
+
+  java-worker:
+    <<: *laravel-test
+    # CPU limits for integration/production environments
+    cpus: 0.5
+
+  default-worker:
+    <<: *laravel-test
+
+  echo:
+    environment:
+      # FOR PRODUCTION, replace by running:
+      # hexdump -n 16 -e '4/4 "%08x" 1 "\n"' /dev/random
+      - APP_ID=b7dab32762076626
+      # FOR PRODUCTION, replace by running:
+      # hexdump -n 16 -e '4/4 "%08x" 1 "\n"' /dev/random
+      - APP_KEY=e1a65cc96e722f1aac4f6b68c25a00e5
+      - *redis-pass

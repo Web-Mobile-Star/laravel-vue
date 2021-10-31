@@ -1,0 +1,67 @@
+/**
+ *  Copyright 2020 Aston University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-datetime-picker/css/bootstrap-datetimepicker.min.css';
+
+// Font Awesome
+@import '~@fortawesome/fontawesome-free/scss/fontawesome.scss';
+@import '~@fortawesome/fontawesome-free/scss/solid.scss';
+
+// jQuery UI
+@import '~jquery-ui-dist/jquery-ui.min.css';
+
+// Highlight.js (we do the highlighting server-side)
+@import '~highlight.js/scss/default.scss';
+
+@import 'cohort-progress-chart';
+
+.highlightChange {
+    background-color: rgb(255, 249, 191, 0);
+    animation: highlightChange 4s linear forwards;
+}
+
+@keyframes highlightChange {
+    50% { background-color: rgb(255, 249, 191, 1); }
+}
+
+.af-suite-tests-table th {
+    width: 40%;
+}
+
+.af-align-middle-cells td {
+    vertical-align: middle;
+}
+
+/* Bootstrap accordion arrows */
+
+.card-title[data-toggle=collapse]::after {
+    content: "\f107";
+    color: #333;
+    float: right;
+    font-family: 'Font Awesome 5 Free';
+}
+
+.card-title[aria-expanded="true"]::after {
+    content: "\f106";
+}

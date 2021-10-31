@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+license_check() {
+    if ! fgrep -q "Licensed under the Apache License, Version 2.0" "$f"; then
+        echo "License information missing in $f"
+        return 1
+    fi
+}
+
+git ls-files -z '*.md' | xargs -0 mdl --style .mdl.rb
+
+git ls-files '*.java' '*.php' '*.js' '*.css' | while read f; do license_check "$f"; done

@@ -1,0 +1,14 @@
+bin/
+bin-test/
+*.class
+*.jar
+*.pyc
+target
+.idea
+*.zip
+*.iml
+!/bin/
+/it-test/
+
+# Temporary local backups
+*.sql

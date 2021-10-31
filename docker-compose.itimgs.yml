@@ -1,0 +1,21 @@
+# Docker Compose file for specifying the images to use for integration testing,
+# using production-level Docker images.
+
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+services:
+  nginx:
+    image: $DOCKER_REPO/nginx:$TEST_TAG
+
+  app:
+    image: $DOCKER_REPO/app:$TEST_TAG
+
+  java-worker:
+    image: $DOCKER_REPO/worker:$TEST_TAG
+
+  default-worker:
+    image: $DOCKER_REPO/worker:$TEST_TAG
+
+  echo:
+    image: $DOCKER_REPO/echo:$TEST_TAG

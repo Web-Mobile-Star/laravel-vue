@@ -1,0 +1,9 @@
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      # Needed to match the MTU of the VM running jobs in GitLab
+      com.docker.network.driver.mtu: 1460

@@ -1,0 +1,97 @@
+# Base Docker Compose file
+#
+# This needs to be composed with other .yml files specific
+# to the environment (dev, prod).
+
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+x-laravel-base: &laravel-base
+  tty: true
+  restart: unless-stopped
+
+services:
+  mariadb:
+    image: 'docker.io/bitnami/mariadb:10.5-debian-10'
+    restart: unless-stopped
+    volumes:
+      - mariadb_data:/bitnami/mariadb
+    tmpfs:
+      - /tmp
+
+  redis:
+    image: 'docker.io/bitnami/redis:6.0-debian-10'
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
+    volumes:
+      - redis_data:/bitnami/redis/data
+
+  nginx:
+    image: autofeedback/nginx:production
+    restart: unless-stopped
+    read_only: true
+    depends_on:
+      - app
+    tmpfs:
+      - /tmp
+      - /opt/bitnami/nginx/tmp
+      - /var/cache
+      - /opt/bitnami/nginx/conf/server_blocks
+
+  app:
+    <<: *laravel-base
+    image: autofeedback/app:production
+    tmpfs:
+      - /tmp
+    depends_on:
+      - mariadb
+      - redis
+
+  java-worker:
+    <<: *laravel-base
+    image: autofeedback/worker:production
+    depends_on:
+      - app
+    # This runs exactly one job before restarting - make sure --max-jobs=1 is the
+    # fourth word on this command, as the entrypoint will be checking for it!
+    command: php artisan queue:work --max-jobs=1 --queue=javaHigh,java,javaLow redis
+    mem_limit: 512M
+    # Two copies
+    scale: 2
+    # 'sudo' disabled in this machine
+    security_opt:
+      - no-new-privileges
+    tmpfs:
+      - /tmp:size=100M
+    volumes:
+      - m2_data:/home/www-data/.m2
+
+  default-worker:
+    <<: *laravel-base
+    image: autofeedback/worker:production
+    mem_limit: 512M
+    depends_on:
+      - app
+    command: php artisan queue:work --queue=defaultHigh,default,defaultLow redis
+    scale: 2
+    tmpfs:
+      - /tmp
+
+  echo:
+    image: autofeedback/echo:production
+    depends_on:
+      - redis
+    tmpfs:
+      - /home/node:uid=1000,gid=1000
+    read_only: true
+
+# If you change this, make sure you check the other .yml files.
+# Docker Compose does not merge volumes when using multiple files.
+volumes:
+  mariadb_data:
+    driver: local
+  redis_data:
+    driver: local
+  m2_data:
+    driver: local

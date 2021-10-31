@@ -1,0 +1,54 @@
+server {
+    listen 0.0.0.0:8080;
+
+    server_name ${SERVER_NAME};
+    root /app/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        gzip_static on;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~* \.(?:css|js|woff|woff2)$ {
+      expires 365d;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass app:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+
+        fastcgi_param HTTP_HOST ${HTTP_HOST};
+        fastcgi_param SERVER_PORT ${SERVER_PORT};
+        fastcgi_param REQUEST_SCHEME ${REQUEST_SCHEME};
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    # for the WebSockets server
+    location /socket.io {
+      proxy_pass http://echo:6001;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+dump_volume() {
+    VOLUME="$1"
+    docker run --rm \
+           -v autofeedback_$VOLUME:/data:ro \
+           -v /var/backups:/backup alpine \
+           sh -c "umask 377; tar -czf /backup/autofeedback-$VOLUME.tar.gz -C /data ./"
+}
+
+dump_volume app_data
+dump_volume app_public_data

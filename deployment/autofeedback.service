@@ -1,0 +1,17 @@
+# /etc/systemd/system/autofeedback.service
+
+[Unit]
+Description=AutoFeedback Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/srv/autofeedback
+ExecStart=/srv/autofeedback/compose.sh up -d --remove-orphans
+ExecStop=/srv/autofeedback/compose.sh down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

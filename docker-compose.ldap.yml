@@ -1,0 +1,34 @@
+# Need v2 so we can set resource limits without Swarm
+version: '2.4'
+
+services:
+  app:
+    environment:
+      - LDAP_TYPE=openldap
+      - WAIT_FOR_LDAP=true
+    depends_on:
+      - openldap
+
+  default-worker:
+    environment:
+      - LDAP_TYPE=openldap
+      - WAIT_FOR_LDAP=true
+
+  # LDAP server for test and development
+  openldap:
+    image: osixia/openldap:1.5.0
+    environment:
+      - LDAP_ORGANISATION=AutoFeedback
+      - LDAP_DOMAIN=example.com
+      - LDAP_ADMIN_PASSWORD=admin
+    volumes:
+      - ./docker/ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+      - ldap_etc_data:/etc/ldap/slapd.d
+      - ldap_db_data:/var/lib/ldap
+    command: [ "--copy-service" ]
+
+volumes:
+  ldap_db_data:
+    driver: local
+  ldap_etc_data:
+    driver: local
